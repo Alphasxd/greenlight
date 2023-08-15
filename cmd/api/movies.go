@@ -3,9 +3,6 @@ package main
 import (
     "fmt"
     "net/http"
-    "strconv" 
-
-    "github.com/julienschmidt/httprouter" 
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
@@ -13,12 +10,8 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
-    // 使用 httprouter.ParamsFromContext() 函数来获取 request context 中的参数
-    params := httprouter.ParamsFromContext(r.Context())
-
-    // 将参数转换为 10 进制的 int64 类型
-    id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
-    if err != nil || id < 1 {
+    id, err := app.readIDParam(r)
+    if err != nil {
         http.NotFound(w, r)
         return
     }
