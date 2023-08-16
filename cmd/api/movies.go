@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,7 +18,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	// 初始化一个新的 json.Decoder 实例，将其绑定到 http.Request.Body
 	// 解码器会从请求体中读取 JSON 数据，并将其保存到 input 结构体变量中
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
