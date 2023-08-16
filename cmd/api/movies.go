@@ -20,7 +20,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	// 解码器会从请求体中读取 JSON 数据，并将其保存到 input 结构体变量中
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
