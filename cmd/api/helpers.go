@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -43,5 +45,36 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	w.WriteHeader(status)
 	w.Write(js)
 
+	return nil
+}
+
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	// 将请求体中的 JSON 数据解码到目标变量 dst 中
+	err := json.NewDecoder(r.Body).Decode(dst)
+	if err != nil {
+		// 定义可能出现的错误类型
+		var syntaxError *json.SyntaxError                     // 语法错误
+		var unmarshalTypeError *json.UnmarshalTypeError       // 类型错误，JSON 与目标的 Go 类型不匹配
+		var invalidUnmarshalError *json.InvalidUnmarshalError // 解码目标错误，通常是目标代码的问题
+
+		// 根据错误类型，返回自定义的错误消息
+		switch {
+		case errors.As(err, &syntaxError):
+			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			return errors.New("body contains badly-formed JSON")
+		case errors.As(err, &unmarshalTypeError):
+			if unmarshalTypeError.Field != "" {
+				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+			}
+			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+		case errors.Is(err, io.EOF):
+			return errors.New("body must not be empty")
+		case errors.As(err, &invalidUnmarshalError):
+			panic(err)
+		default:
+			return err
+		}
+	}
 	return nil
 }
