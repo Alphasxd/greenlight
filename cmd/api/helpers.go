@@ -26,6 +26,7 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	return id, nil
 }
 
+// writeJSON() 写入 JSON 响应
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// 将 data 封装成 JSON 格式
 	js, err := json.Marshal(data)
@@ -49,6 +50,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	return nil
 }
 
+// readJSON() 读取 JSON 请求
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 
 	// 使用 http.MaxBytesReader() 限制读取请求体的大小为 1MB
