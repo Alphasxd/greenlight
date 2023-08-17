@@ -104,7 +104,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 
 	// 再次调用 Decode() 方法，确保请求体只包含单个 JSON 值
 	err = dec.Decode(&struct{}{})
-	if err != io.EOF {
+	if !errors.Is(err, io.EOF) {
 		return errors.New("body must only contain a single JSON value")
 	}
 
