@@ -21,7 +21,10 @@ type config struct {
 	port int
 	env  string
 	db   struct {
-		dsn string
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 }
 
@@ -39,6 +42,9 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostgreSQL DSN")
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
+	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
 
 	// 解析命令行参数
 	flag.Parse()
@@ -83,6 +89,19 @@ func openDB(cfg config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// 设置数据池的最大 open 连接数（in-use+idle），如果 maxOpenConns <= 0，则表示没有限制
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	// 设置数据池的最大空闲连接数（idle），如果 maxIdleConns <= 0，则表示没有限制
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	// 使用 time.ParseDuration() 函数将字符串转换为 time.Duration 类型
+	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
+	if err != nil {
+		return nil, err
+	}
+	// 设置空闲连接的最大可空闲时间，超过该时间的空闲连接将会被关闭
+	db.SetConnMaxIdleTime(duration)
+
 	// 创建一个上下文对象，设置超时时间为5秒
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
