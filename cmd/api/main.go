@@ -58,7 +58,12 @@ func main() {
 	}
 
 	// 延迟关闭数据库连接
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}(db)
 
 	logger.Printf("database connection pool established")
 
