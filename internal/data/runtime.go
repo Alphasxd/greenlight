@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-// 声明一个自定义类型，类型为int32
+// Runtime 声明一个自定义类型，类型为int32
 type Runtime int32
 
-// 定义一个错误，当 UnmarshalJSON 方法无法解码 JSON 数据时，会返回该错误
+// ErrInvalidRuntimeFormat 定义一个错误，当 UnmarshalJSON 方法无法解码 JSON 数据时，会返回该错误
 var ErrInvalidRuntimeFormat = errors.New("invalid runtime format")
 
-// 实现对自定义类型 Runtime 的 MarshalJSON 方法
+// MarshalJSON 实现对自定义类型 Runtime 的 MarshalJSON 方法
 func (r Runtime) MarshalJSON() ([]byte, error) {
-	
+
 	// 自定义打印格式
 	jsonValue := fmt.Sprintf("%d mins", r)
 
