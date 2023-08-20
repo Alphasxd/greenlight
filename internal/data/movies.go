@@ -126,5 +126,28 @@ func (m MovieModel) Update(movie *Movie) error {
 
 // Delete 方法用来删除指定 ID 的电影。
 func (m MovieModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+	DELETE FROM movies
+	WHERE id = $1`
+
+	// Exec() 方法返回一个 sql.Result 对象
+	result, err := m.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	// 检查是否有记录被删除
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
