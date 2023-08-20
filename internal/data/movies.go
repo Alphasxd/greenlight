@@ -47,14 +47,18 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 // Insert 方法将一个新的电影添加到 movies 数据表中。
 func (m MovieModel) Insert(movie *Movie) error {
-	// query 是一个带有占位符的 SQL 查询语句
 	query := `
 	INSERT INTO movies (title, year, runtime, genres)
 	VALUES ($1, $2, $3, $4)
 	RETURNING id, created_at, version`
 
-	// args 切片包含了 query 中占位符的值
-	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+	// args 切片包含了 query 中占位符的值，这些值会按照顺序替换到 query 中
+	args := []any{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+	}
 
 	// 使用 QueryRow() 方法执行查询，以此来获取新记录的 id、created_at 和 version 值
 	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
@@ -67,7 +71,6 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 		return nil, ErrRecordNotFound
 	}
 
-	// query 是一个带有占位符的 SQL 查询语句
 	query := `
 	SELECT id, created_at, title, year, runtime, genres, version
 	FROM movies
@@ -103,7 +106,22 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // Update 方法用来更新指定 ID 的电影信息。
 func (m MovieModel) Update(movie *Movie) error {
-	return nil
+	query := `
+	UPDATE movies
+	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+	WHERE id = $5
+	RETURNING version`
+
+	args := []any{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+	}
+
+	// 使用 QueryRow() 方法执行查询，获取更新后的 version 值
+	return m.DB.QueryRow(query, args...).Scan(&movie.Version)
 }
 
 // Delete 方法用来删除指定 ID 的电影。
