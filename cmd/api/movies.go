@@ -9,6 +9,7 @@ import (
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// 声明一个匿名结构体，用于存储解码后的 JSON 数据
 	var input struct {
 		Title   string       `json:"title"`
 		Year    int32        `json:"year"`
@@ -34,7 +35,6 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	// 创建一个新的 Validator 实例
 	v := validator.New()
-
 	if data.ValidateMovie(v, movie); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
@@ -67,7 +67,6 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 
 	// 调用 Get() 方法来获取指定 ID 的电影
 	movie, err := app.models.Movies.Get(id)
-
 	if err != nil {
 		// 根据错误类型调用对应的帮助方法
 		switch {
@@ -80,6 +79,67 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// 将 movie struct 实例封装为 JSON 格式并写入到响应体中
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// 从 URL 中提取 id 参数
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// 使用 Get() 方法获取指定 ID 的电影
+	movie, err := app.models.Movies.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// 声明一个 input struct 来存储解码后的 JSON 数据
+	var input struct {
+		Title   string       `json:"title"`
+		Year    int32        `json:"year"`
+		Runtime data.Runtime `json:"runtime"`
+		Genres  []string     `json:"genres"`
+	}
+
+	// 将 JSON 数据解码到 input struct 中
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// 将 input struct 中的数据复制到 movie 实例中
+	movie.Title = input.Title
+	movie.Year = input.Year
+	movie.Runtime = input.Runtime
+	movie.Genres = input.Genres
+
+	v := validator.New()
+	if data.ValidateMovie(v, movie); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// 调用 Update() 方法将更新后的电影数据保存到数据库
+	err = app.models.Movies.Update(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// 将更新后的电影数据以 JSON 格式写入响应体中
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
