@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/Alphasxd/greenlight/internal/validator"
@@ -14,6 +15,10 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitempty"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int32     `json:"version"`
+}
+
+type MovieModel struct {
+	DB *sql.DB
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
@@ -36,4 +41,24 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(len(movie.Genres) >= 1, "genres", "must contain at least 1 genre")
 	v.Check(len(movie.Genres) <= 5, "genres", "must not contain more than 5 genres")
 	v.Check(validator.Unique(movie.Genres), "genres", "must not contain duplicate values")
+}
+
+// Insert 方法将一个新的电影添加到 movies 数据表中。
+func (m MovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+// Get 方法返回指定 ID 的电影。
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Update 方法用来更新指定 ID 的电影信息。
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Delete 方法用来删除指定 ID 的电影。
+func (m MovieModel) Delete(id int64) error {
+	return nil
 }
