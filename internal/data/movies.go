@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/lib/pq"
 	"time"
 
@@ -61,7 +62,43 @@ func (m MovieModel) Insert(movie *Movie) error {
 
 // Get 方法返回指定 ID 的电影。
 func (m MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+	// 避免查询不存在的记录
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	// query 是一个带有占位符的 SQL 查询语句
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version
+	FROM movies
+	WHERE id = $1`
+
+	// 声明一个 Movie 实例来存储查询结果
+	var movie Movie
+
+	// 执行查询，扫描结果，并将其存储在 movie 实例中
+	err := m.DB.QueryRow(query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+
+	if err != nil {
+		// 根据错误类型返回自定义错误
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	// 返回 Movie 实例
+	return &movie, nil
 }
 
 // Update 方法用来更新指定 ID 的电影信息。
