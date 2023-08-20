@@ -1,1 +1,3 @@
-### Let’s take a moment to talk through these files and folders and explain the purpose that they’ll serve in our finished project.
+# Greenlight
+## A JSON API for retrieving and managing information about movies. 
+You can think of the core functionality as being a bit like the Open Movie Database API.
