@@ -41,9 +41,21 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	_, err = fmt.Fprintf(w, "%+v\n", input)
+	// 调用 Insert() 方法将电影数据添加到数据库
+	err = app.models.Movies.Insert(movie)
 	if err != nil {
+		app.serverErrorResponse(w, r, err)
 		return
+	}
+
+	// 将新电影的 ID 添加到响应头的 Location 字段
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	// 将新电影的数据以 JSON 格式写入响应体，并将状态码设为 201 Created
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 }
 

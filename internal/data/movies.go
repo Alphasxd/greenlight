@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/Alphasxd/greenlight/internal/validator"
@@ -45,7 +46,17 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 // Insert 方法将一个新的电影添加到 movies 数据表中。
 func (m MovieModel) Insert(movie *Movie) error {
-	return nil
+	// query 是一个带有占位符的 SQL 查询语句
+	query := `
+	INSERT INTO movies (title, year, runtime, genres)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, created_at, version`
+
+	// args 切片包含了 query 中占位符的值
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	// 使用 QueryRow() 方法执行查询，以此来获取新记录的 id、created_at 和 version 值
+	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 // Get 方法返回指定 ID 的电影。
