@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/lib/pq"
@@ -60,8 +61,11 @@ func (m MovieModel) Insert(movie *Movie) error {
 		pq.Array(movie.Genres),
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// 使用 QueryRow() 方法执行查询，以此来获取新记录的 id、created_at 和 version 值
-	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 // Get 方法返回指定 ID 的电影。
@@ -79,8 +83,11 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	// 声明一个 Movie 实例来存储查询结果
 	var movie Movie
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// 执行查询，扫描结果，并将其存储在 movie 实例中
-	err := m.DB.QueryRow(query, id).Scan(
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -121,8 +128,11 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Version,
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// 使用 QueryRow() 方法执行查询，获取更新后的 version 值
-	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 	if err != nil {
 		switch {
 		// 如果查询返回的是 sql.ErrNoRows 错误，说明没有找到匹配的记录，所以返回自定义的 ErrRecordNotFound 错误
@@ -145,8 +155,11 @@ func (m MovieModel) Delete(id int64) error {
 	DELETE FROM movies
 	WHERE id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Exec() 方法返回一个 sql.Result 对象
-	result, err := m.DB.Exec(query, id)
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
