@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Alphasxd/greenlight/internal/validator"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -15,6 +17,7 @@ import (
 // 定义一个名为 envelope 的 map 类型，它的键是 string 类型，值是任意类型
 type envelope map[string]any
 
+// readIDParam() 读取 URL 中的 id 参数
 func (app *application) readIDParam(r *http.Request) (int64, error) {
 	params := httprouter.ParamsFromContext(r.Context())
 
@@ -24,6 +27,42 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	}
 
 	return id, nil
+}
+
+// readString() 返回 URL 查询字符串参数中读取字符串参数，如果参数不存在，则返回默认值
+func (app *application) readString(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+
+	return s
+}
+
+// readCSV() 从 URL 查询字符串参数中读取 CSV（逗号分隔值）参数，将其解析为字符串切片，并返回，否则返回默认值
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
+
+// readInt() 从 URL 查询字符串参数中读取整数值，如果参数不存在或者无法解析为整数，则返回默认值
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	return i
 }
 
 // writeJSON() 写入 JSON 响应
