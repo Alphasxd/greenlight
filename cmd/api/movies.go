@@ -143,7 +143,12 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	// 调用 Update() 方法将更新后的电影数据保存到数据库
 	err = app.models.Movies.Update(movie)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
 

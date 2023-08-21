@@ -109,7 +109,7 @@ func (m MovieModel) Update(movie *Movie) error {
 	query := `
 	UPDATE movies
 	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-	WHERE id = $5
+	WHERE id = $5 AND version = $6
 	RETURNING version`
 
 	args := []any{
@@ -118,10 +118,21 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Runtime,
 		pq.Array(movie.Genres),
 		movie.ID,
+		movie.Version,
 	}
 
 	// 使用 QueryRow() 方法执行查询，获取更新后的 version 值
-	return m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	if err != nil {
+		switch {
+		// 如果查询返回的是 sql.ErrNoRows 错误，说明没有找到匹配的记录，所以返回自定义的 ErrRecordNotFound 错误
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+	return nil
 }
 
 // Delete 方法用来删除指定 ID 的电影。

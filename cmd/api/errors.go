@@ -50,3 +50,9 @@ func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Reques
 func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
 	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }
+
+// 向客户端发送 409 错误响应和 JSON 格式 Response
+func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
+	msg := "unable to update the record due to an edit conflict, please try again"
+	app.errorResponse(w, r, http.StatusConflict, msg)
+}

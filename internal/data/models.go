@@ -8,6 +8,8 @@ import (
 var (
 	// ErrRecordNotFound 表示 Get() 方法未找到记录的错误。
 	ErrRecordNotFound = errors.New("record not found")
+	// ErrEditConflict 表示存在编辑冲突的错误。
+	ErrEditConflict = errors.New("edit conflict")
 )
 
 // Models 定义一个模型结构体，包含所有模型的实例
