@@ -37,6 +37,21 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(validator.In(f.Sort, f.SortSafelist...), "sort", "invalid sort value")
 }
 
+// calculateMetadata 方法返回一个包含了元数据的 Metadata 结构体。
+func calculateMetadata(totalRecords, page, pageSize int) Metadata {
+	if totalRecords == 0 {
+		return Metadata{}
+	}
+
+	return Metadata{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		FirstPage:    1,
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))), // ceil 向上取整 ceiling 天花板
+		TotalRecords: totalRecords,
+	}
+}
+
 // sortColumn 方法返回排序列的名称，即数据库中的列名。
 func (f Filters) sortColumn() string {
 	for _, safeValue := range f.SortSafelist {
@@ -65,19 +80,4 @@ func (f Filters) limit() int {
 // offset 方法返回 OFFSET 子句的值。
 func (f Filters) offset() int {
 	return (f.Page - 1) * f.PageSize
-}
-
-// calculateMetadata 方法返回一个包含了元数据的 Metadata 结构体。
-func calculateMetadata(totalRecords, page, pageSize int) Metadata {
-	if totalRecords == 0 {
-		return Metadata{}
-	}
-
-	return Metadata{
-		CurrentPage:  page,
-		PageSize:     pageSize,
-		FirstPage:    1,
-		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))), // ceil 向上取整 ceiling 天花板
-		TotalRecords: totalRecords,
-	}
 }
