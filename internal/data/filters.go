@@ -1,6 +1,10 @@
 package data
 
-import "github.com/Alphasxd/greenlight/internal/validator"
+import (
+	"strings"
+
+	"github.com/Alphasxd/greenlight/internal/validator"
+)
 
 type Filters struct {
 	Page         int
@@ -9,6 +13,7 @@ type Filters struct {
 	SortSafelist []string
 }
 
+// ValidateFilters 方法检查过滤器字段是否包含有效的值。如果有错误，方法会将错误添加到 v.Errors 中。
 func ValidateFilters(v *validator.Validator, f Filters) {
 
 	// 检查 Page 字段
@@ -21,4 +26,24 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 
 	// 检查 Sort 字段
 	v.Check(validator.In(f.Sort, f.SortSafelist...), "sort", "invalid sort value")
+}
+
+// sortColumn 方法返回排序列的名称，即数据库中的列名。
+func (f Filters) sortColumn() string {
+	for _, safeValue := range f.SortSafelist {
+		if f.Sort == safeValue {
+			return strings.TrimPrefix(f.Sort, "-")
+		}
+	}
+
+	// 直接 panic，防止 SQL 注入攻击
+	panic("unsafe sort parameter: " + f.Sort)
+}
+
+// sortDirection 方法返回排序方向，即 ASC 或 DESC。
+func (f Filters) sortDirection() string {
+	if strings.HasPrefix(f.Sort, "-") {
+		return "DESC" // descending
+	}
+	return "ASC" // ascending
 }

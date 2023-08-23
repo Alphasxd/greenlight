@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/lib/pq"
+	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 
 	"github.com/Alphasxd/greenlight/internal/validator"
 )
@@ -24,6 +26,7 @@ type MovieModel struct {
 	DB *sql.DB
 }
 
+// ValidateMovie 方法检查电影结构体中的值是否有效。如果有错误，方法会将错误添加到 v.Errors 中。
 func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	// 检查 Title 字段
@@ -113,12 +116,12 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // GetAll 方法返回所有电影的列表。
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	query := `
-	SELECT id, created_at, title, year, runtime, genres, version
-	FROM movies
-	WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
-	AND (genres @> $2 OR $2 = '{}')
-	ORDER BY id`
+	query := fmt.Sprintf(`
+        SELECT id, created_at, title, year, runtime, genres, version
+        FROM movies
+        WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '') 
+        AND (genres @> $2 OR $2 = '{}')     
+        ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
