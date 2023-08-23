@@ -47,3 +47,13 @@ func (f Filters) sortDirection() string {
 	}
 	return "ASC" // ascending
 }
+
+// limit 方法返回 LIMIT 子句的值。
+func (f Filters) limit() int {
+	return f.PageSize
+}
+
+// offset 方法返回 OFFSET 子句的值。
+func (f Filters) offset() int {
+	return (f.Page - 1) * f.PageSize
+}
