@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/Alphasxd/greenlight/internal/data"
 	"github.com/Alphasxd/greenlight/internal/validator"
-	"net/http"
 )
 
 func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {

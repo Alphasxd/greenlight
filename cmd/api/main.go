@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/Alphasxd/greenlight/internal/data"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/Alphasxd/greenlight/internal/data"
 
 	_ "github.com/lib/pq"
 )

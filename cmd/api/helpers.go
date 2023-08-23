@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Alphasxd/greenlight/internal/validator"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/Alphasxd/greenlight/internal/validator"
 
 	"github.com/julienschmidt/httprouter"
 )
