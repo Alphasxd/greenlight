@@ -7,7 +7,10 @@ import (
 
 // 记录错误日志
 func (app *application) logError(r *http.Request, err error) {
-	app.logger.Println(err)
+	app.logger.PrintError(err, map[string]string{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+	})
 }
 
 // 向客户端发送 JSON 格式的错误信息和给定的状态码
