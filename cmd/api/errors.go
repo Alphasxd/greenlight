@@ -24,7 +24,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
-// 当应用发生错误时，记录错误日志，并调用 errorResponse() 方法发送响应到客户端
+// 向客户端发送 500 错误响应和 JSON 格式 Response
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 
