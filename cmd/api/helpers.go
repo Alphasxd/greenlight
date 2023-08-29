@@ -156,7 +156,12 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 
 // background() 将一个函数作为 goroutine 在后台运行
 func (app *application) background(fn func()) {
+	// 增加 WaitGroup 的计数器
+	app.wg.Add(1)
+
 	go func() {
+		// 函数退出时，将 WaitGroup 的计数器减一
+		defer app.wg.Done()
 		// recover() 函数用于恢复 panic() 函数引起的 panic，防止程序崩溃
 		defer func() {
 			if err := recover(); err != nil {

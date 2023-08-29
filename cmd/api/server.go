@@ -42,9 +42,17 @@ func (app *application) serve() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// 调用 Shutdown() 方法来关闭服务器，传入我们自己创建的上下文
-		// 如果成功，Shutdown() 方法会返回 nil，如果失败，说明没有在 5 秒内完成所有活动的连接，
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		app.logger.PrintInfo("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+		// 等待后台任务完成
+		app.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	app.logger.PrintInfo("starting server", map[string]string{
