@@ -55,12 +55,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	go func() {
+	// 调用 background() 方法，将发送欢迎邮件的任务放入任务队列中
+	app.background(func() {
 		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
-	}()
+	})
 
 	// 将用户信息以 JSON 格式写入响应体中，并将状态码设为 201 Created
 	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)

@@ -153,3 +153,17 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 
 	return nil
 }
+
+// background() 将一个函数作为 goroutine 在后台运行
+func (app *application) background(fn func()) {
+	go func() {
+		// recover() 函数用于恢复 panic() 函数引起的 panic，防止程序崩溃
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+		// 调用 fn() 函数
+		fn()
+	}()
+}
