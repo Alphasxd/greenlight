@@ -34,7 +34,7 @@ func (app *application) serve() error {
 		s := <-quit
 
 		// 记录信号的名称，使用 String() 方法将信号转换为字符串
-		app.logger.PrintInfo("shutting down server", map[string]string{
+		app.logger.PrintInfo("caught signal", map[string]string{
 			"signal": s.String(),
 		})
 
