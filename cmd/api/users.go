@@ -64,12 +64,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	// 调用 background() 方法，将发送欢迎邮件的任务放入任务队列中
 	app.background(func() {
-		data := map[string]any{
+		routieData := map[string]any{
 			"activationToken": token.Plaintext,
 			"userID":          user.ID,
 		}
 
-		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", routieData)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
@@ -77,6 +77,64 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	// 将用户信息以 JSON 格式写入响应体中，并将状态码设为 201 Created
 	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		TokenPlaintext string `json:"token"`
+	}
+
+	// 将从 request body 中读取的 JSON 数据解码到 input 结构体中
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+
+	if data.ValidateTokenPlaintext(v, input.TokenPlaintext); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	user, err := app.models.Users.GetForToken(data.ScopeActivation, input.TokenPlaintext)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			v.AddError("token", "invalid or expired activation token")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// 更新用户的激活状态
+	user.Activated = true
+
+	err = app.models.Users.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// 一切进展顺利，删除当前用户的所有令牌
+	err = app.models.Tokens.DeleteAllForUser(data.ScopeActivation, user.ID)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

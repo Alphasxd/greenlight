@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"time"
@@ -184,4 +185,47 @@ func (m UserModel) Update(user *User) error {
 	}
 
 	return nil
+}
+
+func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+	// tokenHash 是一个长度为 32 字节的字节数组，我们将其作为查询参数传入
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+	query := `
+		SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
+        FROM users
+        INNER JOIN tokens
+        ON users.id = tokens.user_id
+        WHERE tokens.hash = $1
+        AND tokens.scope = $2 
+        AND tokens.expiry > $3`
+
+	// tokenHash[:] 将字节数组转换为字节切片
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// 执行查询，将结果扫描到 user 结构体中
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+		&user.Version,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	// 返回匹配的用户记录
+	return &user, nil
 }
