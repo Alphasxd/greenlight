@@ -27,6 +27,7 @@ func (r Runtime) MarshalJSON() ([]byte, error) {
 
 }
 
+// UnmarshalJSON 实现对自定义类型 Runtime 的 UnmarshalJSON 方法
 func (r *Runtime) UnmarshalJSON(jsonValue []byte) error {
 
 	// 移除两侧的双引号
