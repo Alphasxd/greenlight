@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// recoverPanic 是一个中间件，用来恢复 panic，并向客户端发送 500 Internal Server Error 响应。
 func (app *application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -25,6 +27,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+// rateLimit 是一个中间件，用来实现基于令牌桶的请求速率限制。
 func (app *application) rateLimit(next http.Handler) http.Handler {
 	type client struct {
 		limiter  *rate.Limiter
@@ -91,6 +94,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	})
 }
 
+// authenticate 是一个中间件，用来验证用户是否已经登录。
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Authorization")
@@ -120,7 +124,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		user, err := app.models.Users.GetForToken(data.ScopeAuthentication, token)
 		if err != nil {
 			switch {
-			case err == data.ErrRecordNotFound:
+			case errors.Is(err, data.ErrRecordNotFound):
 				app.invalidAuthenticationTokenResponse(w, r)
 			default:
 				app.serverErrorResponse(w, r, err)
@@ -132,4 +136,34 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// requireAuthenticatedUser 是一个中间件，用来验证用户是否已经登录。
+func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+		// 如果用户是匿名的，说明用户未登录，调用 authenticationRequiredResponse() 方法向客户端发送 401 Unauthorized 响应
+		if user.IsAnonymous() {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requireActivatedUser 是一个中间件，用来验证已登录的用户是否已经激活。
+func (app *application) requireActivateUser(next http.HandlerFunc) http.HandlerFunc {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+		// 如果用户未激活，调用 inactiveAccountResponse() 方法向客户端发送 403 Forbidden 响应
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+	// 将 requireAuthenticatedUser() 中间件包装在 requireActivatedUser() 中间件外面，这样就可以确保用户已经登录，然后再检查用户是否已经激活
+	return app.requireAuthenticatedUser(fn)
 }

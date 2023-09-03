@@ -66,13 +66,27 @@ func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http
 	app.errorResponse(w, r, http.StatusTooManyRequests, msg)
 }
 
+// 向客户端发送 401 错误响应和 JSON 格式 Response, 无效的凭证
 func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
 	msg := "invalid authentication credentials"
 	app.errorResponse(w, r, http.StatusUnauthorized, msg)
 }
 
+// 向客户端发送 401 错误响应和 JSON 格式 Response, 无效的 Token
 func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("WWW-Authenticate", "Bearer")
 	msg := "invalid or missing authentication token"
 	app.errorResponse(w, r, http.StatusUnauthorized, msg)
+}
+
+// 向客户端发送 401 错误响应和 JSON 格式 Response, 用户未通过身份验证，需要登录
+func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	msg := "you must be authenticated to access this resource"
+	app.errorResponse(w, r, http.StatusUnauthorized, msg)
+}
+
+// 向客户端发送 403 错误响应和 JSON 格式 Response, 用户未激活
+func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
+	msg := "your user account must be activated to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, msg)
 }
