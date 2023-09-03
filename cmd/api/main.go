@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,6 +41,9 @@ type config struct {
 		password string
 		sender   string
 	}
+	cors struct {
+		trustedOrigins []string
+	}
 }
 
 // 应用结构体，用于存储应用程序的依赖项，handler，helper，middleware，logger等
@@ -74,6 +78,11 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "d94086b9b52487", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "db56cefb32b838", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@github/Alphasxd>", "SMTP sender")
+
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 
 	// 解析命令行参数
 	flag.Parse()

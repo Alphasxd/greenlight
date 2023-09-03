@@ -193,3 +193,21 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 	// 这样就可以确保用户已经登录并且已经激活，然后再检查用户是否有指定的权限
 	return app.requireActivateUser(fn)
 }
+
+// enableCORS 是一个中间件，用来添加 CORS 头信息到响应中。
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Origin")
+
+		origin := r.Header.Get("Origin")
+		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
+			for i := range app.config.cors.trustedOrigins {
+				// 如果请求的 Origin 头信息是可信任的，则将 Access-Control-Allow-Origin 头信息设置为匹配的 Origin 值
+				if origin == app.config.cors.trustedOrigins[i] {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+				}
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
