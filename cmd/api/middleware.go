@@ -154,7 +154,7 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 
 // requireActivatedUser 是一个中间件，用来验证已登录的用户是否已经激活。
 func (app *application) requireActivateUser(next http.HandlerFunc) http.HandlerFunc {
-	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	fn := func(w http.ResponseWriter, r *http.Request) {
 		user := app.contextGetUser(r)
 		// 如果用户未激活，调用 inactiveAccountResponse() 方法向客户端发送 403 Forbidden 响应
 		if !user.Activated {
@@ -163,7 +163,33 @@ func (app *application) requireActivateUser(next http.HandlerFunc) http.HandlerF
 		}
 
 		next.ServeHTTP(w, r)
-	})
-	// 将 requireAuthenticatedUser() 中间件包装在 requireActivatedUser() 中间件外面，这样就可以确保用户已经登录，然后再检查用户是否已经激活
+	}
+	// 将 requireAuthenticatedUser() 中间件包装在 requireActivatedUser() 中间件外面
+	// 这样就可以确保用户已经登录，然后再检查用户是否已经激活
 	return app.requireAuthenticatedUser(fn)
+}
+
+// requirePermission 是一个中间件，用来检查用户是否有指定的权限。
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		// 如果用户没有指定的权限，调用 notPermittedResponse() 方法向客户端发送 403 Forbidden 响应
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	}
+
+	// 将 requireActivatedUser() 中间件包装在 requirePermission() 中间件外面
+	// 这样就可以确保用户已经登录并且已经激活，然后再检查用户是否有指定的权限
+	return app.requireActivateUser(fn)
 }

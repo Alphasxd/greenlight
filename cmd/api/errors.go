@@ -24,7 +24,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
-// 向客户端发送 500 错误响应和 JSON 格式 Response
+// 向客户端发送 500 错误响应和 JSON 格式 Response, 服务器内部错误
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 
@@ -32,35 +32,35 @@ func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Reque
 	app.errorResponse(w, r, http.StatusInternalServerError, msg)
 }
 
-// 向客户端发送 404 错误响应和 JSON 格式 Response
+// 向客户端发送 404 错误响应和 JSON 格式 Response, 资源未找到
 func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
 	msg := "the requested resource could not be found"
 	app.errorResponse(w, r, http.StatusNotFound, msg)
 }
 
-// 向客户端发送 405 错误响应和 JSON 格式 Response
+// 向客户端发送 405 错误响应和 JSON 格式 Response, 方法不允许
 func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	msg := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
 	app.errorResponse(w, r, http.StatusMethodNotAllowed, msg)
 }
 
-// 向客户端发送 400 错误响应和 JSON 格式 Response
+// 向客户端发送 400 错误响应和 JSON 格式 Response, 请求无效
 func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
-// 向客户端发送 422 错误响应和 JSON 格式 Response
+// 向客户端发送 422 错误响应和 JSON 格式 Response, 校验失败
 func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
 	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }
 
-// 向客户端发送 409 错误响应和 JSON 格式 Response
+// 向客户端发送 409 错误响应和 JSON 格式 Response, 编辑冲突
 func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
 	msg := "unable to update the record due to an edit conflict, please try again"
 	app.errorResponse(w, r, http.StatusConflict, msg)
 }
 
-// 向客户端发送 429 错误响应和 JSON 格式 Response
+// 向客户端发送 429 错误响应和 JSON 格式 Response，超出速率限制
 func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	msg := "rate limit exceeded"
 	app.errorResponse(w, r, http.StatusTooManyRequests, msg)
@@ -88,5 +88,11 @@ func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r 
 // 向客户端发送 403 错误响应和 JSON 格式 Response, 用户未激活
 func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
 	msg := "your user account must be activated to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, msg)
+}
+
+// 向客户端发送 403 错误响应和 JSON 格式 Response, 用户无权限
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	msg := "your user account doesn't have the necessary permissions to access this resource"
 	app.errorResponse(w, r, http.StatusForbidden, msg)
 }
