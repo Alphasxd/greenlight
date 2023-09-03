@@ -14,16 +14,18 @@ var (
 
 // Models 定义一个模型结构体，包含所有模型的实例
 type Models struct {
-	Movies MovieModel
-	Tokens TokenModel
-	Users  UserModel
+	Movies      MovieModel
+	Tokens      TokenModel
+	Users       UserModel
+	Permissions PermissionModel
 }
 
 // NewModels 函数返回一个包含所有模型的 Models 结构体实例
 func NewModels(db *sql.DB) Models {
 	return Models{
-		Movies: MovieModel{DB: db},
-		Tokens: TokenModel{DB: db},
-		Users:  UserModel{DB: db},
+		Movies:      MovieModel{DB: db},
+		Tokens:      TokenModel{DB: db},
+		Users:       UserModel{DB: db},
+		Permissions: PermissionModel{DB: db},
 	}
 }
