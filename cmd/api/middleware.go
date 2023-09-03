@@ -140,7 +140,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 // requireAuthenticatedUser 是一个中间件，用来验证用户是否已经登录。
 func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		user := app.contextGetUser(r)
 		// 如果用户是匿名的，说明用户未登录，调用 authenticationRequiredResponse() 方法向客户端发送 401 Unauthorized 响应
 		if user.IsAnonymous() {
@@ -149,7 +149,7 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 		}
 
 		next.ServeHTTP(w, r)
-	})
+	}
 }
 
 // requireActivatedUser 是一个中间件，用来验证已登录的用户是否已经激活。
