@@ -198,6 +198,7 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 func (app *application) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Origin")
+		w.Header().Add("Vary", "Access-Control-Request-Method")
 
 		origin := r.Header.Get("Origin")
 		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
@@ -205,6 +206,16 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 				// 如果请求的 Origin 头信息是可信任的，则将 Access-Control-Allow-Origin 头信息设置为匹配的 Origin 值
 				if origin == app.config.cors.trustedOrigins[i] {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
+
+					// 检查请求是否是预检请求
+					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+						// 如果是预检请求，则设置允许使用的 HTTP 方法的头信息
+						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+						w.WriteHeader(http.StatusOK)
+						return
+					}
 				}
 			}
 		}
