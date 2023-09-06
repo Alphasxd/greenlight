@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"os"
 	"strings"
@@ -104,6 +105,9 @@ func main() {
 	}(db)
 
 	logger.PrintInfo("database connection pool established", nil)
+
+	// 在 expvar 中注册一个名为 version 的字符串变量
+	expvar.NewString("version").Set(version)
 
 	// 初始化一个application实例
 	app := &application{
