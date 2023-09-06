@@ -6,6 +6,7 @@ import (
 	"expvar"
 	"flag"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -106,8 +107,23 @@ func main() {
 
 	logger.PrintInfo("database connection pool established", nil)
 
-	// 在 expvar 中注册一个名为 version 的字符串变量
+	// 在 expvar 中注册一个名为 version 的字符串变量，用于存储应用程序的版本号
 	expvar.NewString("version").Set(version)
+
+	// 在 expvar 中注册一个名为 goroutines 的变量，用于存储当前 goroutine 的数量
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
+	// 在 expvar 中注册一个名为 database 的变量，用于存储数据库连接池的统计信息
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+
+	// 在 expvar 中注册一个名为 timestamp 的变量，用于存储当前时间戳
+	expvar.Publish("timestamp", expvar.Func(func() any {
+		return time.Now().Unix()
+	}))
 
 	// 初始化一个application实例
 	app := &application{
