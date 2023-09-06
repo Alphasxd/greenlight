@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/go-mail/mail v2.3.1+incompatible
 	golang.org/x/crypto v0.12.0
 	golang.org/x/time v0.3.0
