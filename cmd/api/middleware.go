@@ -4,7 +4,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,9 +12,9 @@ import (
 
 	"github.com/Alphasxd/greenlight/internal/data"
 	"github.com/Alphasxd/greenlight/internal/validator"
-	"golang.org/x/time/rate"
-
 	"github.com/felixge/httpsnoop"
+	"github.com/tomasen/realip"
+	"golang.org/x/time/rate"
 )
 
 // recoverPanic 是一个中间件，用来恢复 panic，并向客户端发送 500 Internal Server Error 响应。
@@ -65,12 +64,8 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 只有当速率限制器是启用的时候，才会执行速率限制
 		if app.config.limiter.enabled {
-			// 使用 SplitHostPort() 函数从请求的远程地址中提取host部分，赋值给ip变量
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				app.serverErrorResponse(w, r, err)
-				return
-			}
+			// 使用 realip.FromRequest() 函数获取客户端的 IP 地址
+			ip := realip.FromRequest(r)
 
 			mu.Lock()
 
