@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -20,6 +21,9 @@ import (
 
 // 定义版本号
 const version = "1.0.0"
+
+// 定义构建时间
+var buildTime string
 
 // 定义配置结构体
 type config struct {
@@ -86,8 +90,17 @@ func main() {
 		return nil
 	})
 
+	// 定义一个命令行参数，用于显示版本号
+	displayVersion := flag.Bool("version", false, "Display version and exit")
+
 	// 解析命令行参数
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Build time:\t%s\n", buildTime)
+		os.Exit(0)
+	}
 
 	// 初始化一个logger实例
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
