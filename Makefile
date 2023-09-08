@@ -70,4 +70,4 @@ vendor:
 .PHONY: build/api
 build/api:
 	@echo 'Building cmd/api...'
-	go build -o=./bin/api ./cmd/api
+	go build -ldflags='-s' -o=./bin/api.exe ./cmd/api
