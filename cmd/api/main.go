@@ -19,11 +19,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// 定义版本号
-const version = "1.0.0"
-
-// 定义构建时间
-var buildTime string
+// 定义版本号和构建时间
+var (
+	buildTime string
+	version   string
+)
 
 // 定义配置结构体
 type config struct {
